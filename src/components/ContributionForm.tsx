@@ -1,70 +1,82 @@
 
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { MobileMoneySelector } from './MobileMoneySelector';
 import { addContribution } from '@/lib/data';
 import { useToast } from '@/components/ui/use-toast';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { Smartphone } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { AlertCircle, Loader2 } from 'lucide-react';
 
 export const ContributionForm = () => {
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [amount, setAmount] = useState('');
   const [isProcessing, setIsProcessing] = useState(false);
+  const [error, setError] = useState('');
   const { toast } = useToast();
   const navigate = useNavigate();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setError('');
     
-    if (!title || !amount || parseFloat(amount) <= 0) {
-      toast({
-        title: "Error",
-        description: "Please fill in all required fields",
-        variant: "destructive",
-      });
+    // Validate input
+    if (!title) {
+      setError('Please enter a title for your contribution');
+      return;
+    }
+    
+    if (!amount || isNaN(parseFloat(amount)) || parseFloat(amount) <= 0) {
+      setError('Please enter a valid amount');
       return;
     }
 
     setIsProcessing(true);
     
     try {
-      const { data, error } = await supabase.functions.invoke('create-payment', {
+      // Convert amount to a number
+      const numericAmount = Math.round(parseFloat(amount) * 100); // Convert to cents for Stripe
+      
+      // Call the edge function to create payment
+      const { data, error: paymentError } = await supabase.functions.invoke('create-payment', {
         body: { 
-          amount: Math.round(parseFloat(amount) * 100), // Convert to cents
-          title 
+          amount: numericAmount,
+          title,
+          description
         },
       });
 
-      if (error) throw error;
-
-      if (data?.url) {
-        // Add to contributions list first
-        addContribution({
-          title,
-          description,
-          amount: parseFloat(amount),
-          paymentMethod: 'stripe',
-          paymentStatus: 'pending',
-          contributors: [],
-        });
-
-        // Redirect to Stripe Checkout
-        window.location.href = data.url;
+      if (paymentError) throw new Error(paymentError.message);
+      
+      if (!data?.url) {
+        throw new Error('No payment URL received from server');
       }
+
+      // Add to contributions list
+      addContribution({
+        title,
+        description,
+        amount: parseFloat(amount),
+        paymentMethod: 'stripe',
+        paymentStatus: 'pending',
+        contributors: [],
+      });
+
+      // Redirect to Stripe Checkout
+      window.location.href = data.url;
     } catch (error) {
       console.error('Payment error:', error);
+      setError(error.message || 'Failed to process payment. Please try again.');
+      setIsProcessing(false);
       toast({
-        title: "Error",
-        description: "Failed to process payment",
+        title: "Payment Error",
+        description: error.message || "Failed to process payment",
         variant: "destructive",
       });
-      setIsProcessing(false);
     }
   };
 
@@ -72,6 +84,13 @@ export const ContributionForm = () => {
     <div className="space-y-6">
       <div className="bg-white p-5 rounded-lg shadow-sm">
         <h2 className="text-xl font-bold mb-4">Create Contribution</h2>
+        
+        {error && (
+          <Alert variant="destructive" className="mb-4">
+            <AlertCircle className="h-4 w-4" />
+            <AlertDescription>{error}</AlertDescription>
+          </Alert>
+        )}
         
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">
@@ -82,6 +101,7 @@ export const ContributionForm = () => {
               onChange={(e) => setTitle(e.target.value)}
               placeholder="Community Water Project"
               required
+              disabled={isProcessing}
             />
           </div>
           
@@ -93,6 +113,7 @@ export const ContributionForm = () => {
               onChange={(e) => setDescription(e.target.value)}
               placeholder="Describe the purpose of this contribution"
               className="resize-none"
+              disabled={isProcessing}
             />
           </div>
           
@@ -106,11 +127,19 @@ export const ContributionForm = () => {
               placeholder="10000"
               required
               min="1"
+              disabled={isProcessing}
             />
           </div>
           
           <Button type="submit" className="w-full" disabled={isProcessing}>
-            {isProcessing ? "Processing..." : "Proceed to Payment"}
+            {isProcessing ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                Processing...
+              </>
+            ) : (
+              "Proceed to Payment"
+            )}
           </Button>
         </form>
       </div>

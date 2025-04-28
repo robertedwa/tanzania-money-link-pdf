@@ -13,12 +13,28 @@ serve(async (req) => {
   }
 
   try {
-    const { amount, title } = await req.json()
+    const { amount, title, description = '' } = await req.json()
+    
+    if (!amount || isNaN(amount) || amount <= 0) {
+      throw new Error('Invalid amount provided')
+    }
+    
+    if (!title) {
+      throw new Error('Title is required')
+    }
 
     // Initialize Stripe
-    const stripe = new Stripe(Deno.env.get('STRIPE_SECRET_KEY') || '', {
+    const stripeSecretKey = Deno.env.get('STRIPE_SECRET_KEY')
+    if (!stripeSecretKey) {
+      throw new Error('Stripe secret key is not configured')
+    }
+    
+    const stripe = new Stripe(stripeSecretKey, {
       apiVersion: '2023-10-16',
     })
+
+    // Origin for success/cancel URLs
+    const origin = req.headers.get('origin') || 'http://localhost:5173'
 
     // Create a payment session
     const session = await stripe.checkout.sessions.create({
@@ -29,23 +45,30 @@ serve(async (req) => {
             currency: 'tzs',
             product_data: {
               name: title,
+              description: description,
             },
-            unit_amount: amount,
+            unit_amount: Math.round(amount), // Ensure amount is rounded
           },
           quantity: 1,
         },
       ],
       mode: 'payment',
-      success_url: `${req.headers.get('origin')}/contribution-success`,
-      cancel_url: `${req.headers.get('origin')}/contribute`,
+      success_url: `${origin}/contribution-success?amount=${amount}&title=${encodeURIComponent(title)}`,
+      cancel_url: `${origin}/contribute`,
     })
+
+    if (!session.url) {
+      throw new Error('Failed to create payment session')
+    }
 
     return new Response(JSON.stringify({ url: session.url }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     })
   } catch (error) {
-    console.error('Error:', error)
-    return new Response(JSON.stringify({ error: error.message }), {
+    console.error('Payment error:', error)
+    return new Response(JSON.stringify({ 
+      error: error.message || 'An error occurred while processing your payment'
+    }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       status: 500,
     })
