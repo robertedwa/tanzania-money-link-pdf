@@ -17,8 +17,14 @@ serve(async (req) => {
   try {
     const { amount, title, description = '' } = await req.json()
     
+    // Enhanced validation for amount
     if (!amount || isNaN(amount) || amount <= 0) {
       throw new Error('Invalid amount provided')
+    }
+    
+    // Ensure minimum amount (50,000 TZS is approximately $20 USD)
+    if (amount < 50000) {
+      throw new Error('Amount must be at least 50,000 TZS to meet Stripe minimum requirements')
     }
     
     if (!title) {
