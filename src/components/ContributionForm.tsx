@@ -39,7 +39,7 @@ export const ContributionForm = () => {
     
     try {
       // Convert amount to a number
-      const numericAmount = Math.round(parseFloat(amount) * 100); // Convert to cents for Stripe
+      const numericAmount = parseFloat(amount);
       
       // Call the edge function to create payment
       const { data, error: paymentError } = await supabase.functions.invoke('create-payment', {
@@ -50,7 +50,10 @@ export const ContributionForm = () => {
         },
       });
 
-      if (paymentError) throw new Error(paymentError.message);
+      if (paymentError) {
+        console.error('Payment function error:', paymentError);
+        throw new Error(paymentError.message || 'Failed to process payment');
+      }
       
       if (!data?.url) {
         throw new Error('No payment URL received from server');

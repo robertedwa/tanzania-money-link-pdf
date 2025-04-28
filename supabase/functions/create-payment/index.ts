@@ -7,6 +7,8 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 }
 
+const STRIPE_SECRET_KEY = 'sk_test_51RIcEXD1dRP1CmW4rN4vTE9eLZWmQBBIwZ97PhO4xFm3NUY94Iug7VAeMtVaQJihJjmVCPBDazyDu4QT5KJawtZq00pWPGxqVn';
+
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders })
@@ -23,13 +25,8 @@ serve(async (req) => {
       throw new Error('Title is required')
     }
 
-    // Initialize Stripe
-    const stripeSecretKey = Deno.env.get('STRIPE_SECRET_KEY')
-    if (!stripeSecretKey) {
-      throw new Error('Stripe secret key is not configured')
-    }
-    
-    const stripe = new Stripe(stripeSecretKey, {
+    // Initialize Stripe with the hardcoded key
+    const stripe = new Stripe(STRIPE_SECRET_KEY, {
       apiVersion: '2023-10-16',
     })
 
