@@ -22,9 +22,10 @@ serve(async (req) => {
       throw new Error('Invalid amount provided')
     }
     
-    // Ensure minimum amount (50,000 TZS is approximately $20 USD)
-    if (amount < 50000) {
-      throw new Error('Amount must be at least 50,000 TZS to meet Stripe minimum requirements')
+    // Ensure minimum amount - increase to 100,000 TZS which is around $40 USD
+    // This should be well above Stripe's minimum requirement
+    if (amount < 100000) {
+      throw new Error('Amount must be at least 100,000 TZS to meet Stripe minimum requirements')
     }
     
     if (!title) {
@@ -40,17 +41,22 @@ serve(async (req) => {
     const origin = req.headers.get('origin') || 'http://localhost:5173'
 
     // Create a payment session
+    // Convert TZS to USD for Stripe (approximate conversion of 2500 TZS = $1 USD)
+    // This is a rough conversion - in production you'd use a currency API
+    const usdAmount = Math.ceil(amount / 2500 * 100); // Convert to USD cents, rounding up
+
     const session = await stripe.checkout.sessions.create({
       payment_method_types: ['card'],
       line_items: [
         {
           price_data: {
-            currency: 'tzs',
+            // Use USD instead of TZS to avoid currency conversion issues
+            currency: 'usd',
             product_data: {
               name: title,
               description: description,
             },
-            unit_amount: Math.round(amount), // Ensure amount is rounded
+            unit_amount: usdAmount, // Use USD amount in cents
           },
           quantity: 1,
         },
