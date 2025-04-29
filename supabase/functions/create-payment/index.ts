@@ -13,9 +13,9 @@ serve(async (req) => {
   }
 
   try {
-    const { amount, title, description = '', provider = '' } = await req.json()
+    const { amount, title, description = '', provider = '', phoneNumber = '' } = await req.json()
     
-    // Enhanced validation for amount
+    // Enhanced validation
     if (!amount || isNaN(amount) || amount <= 0) {
       throw new Error('Invalid amount provided')
     }
@@ -33,20 +33,80 @@ serve(async (req) => {
       throw new Error('Mobile money provider is required')
     }
 
+    if (!phoneNumber || !/^\d{9,12}$/.test(phoneNumber)) {
+      throw new Error('Valid phone number is required')
+    }
+
     // Origin for success/cancel URLs
     const origin = req.headers.get('origin') || 'http://localhost:5173'
 
-    // Simulate mobile money transaction
-    // In a real implementation, this would integrate with mobile money APIs
+    // Generate transaction ID
     const paymentId = crypto.randomUUID();
     
-    // Create a simulated payment response
+    // In a real implementation, this would integrate with mobile money APIs
+    // For each provider (TigoPesa, M-Pesa, Airtel Money, etc.)
+    
+    // Example of how actual integration might work (pseudocode)
+    let apiEndpoint;
+    let apiKey;
+    let requestData;
+    
+    switch(provider) {
+      case 'mpesa':
+        // M-Pesa specific configuration
+        apiEndpoint = "https://api.mpesa.com/payments";
+        apiKey = "MPESA_API_KEY"; // Would be stored in edge function secrets
+        requestData = {
+          amount: amount,
+          phone: phoneNumber,
+          reference: paymentId
+        };
+        break;
+      case 'tigo':
+        // Tigo Pesa specific configuration
+        apiEndpoint = "https://api.tigo.com/payments";
+        apiKey = "TIGO_API_KEY";
+        requestData = {
+          amount: amount,
+          msisdn: phoneNumber,
+          transactionId: paymentId
+        };
+        break;
+      case 'airtel':
+        // Airtel Money specific configuration
+        apiEndpoint = "https://api.airtel.com/payments";
+        apiKey = "AIRTEL_API_KEY";
+        requestData = {
+          amount: amount,
+          phoneNumber: phoneNumber,
+          transactionId: paymentId
+        };
+        break;
+      default:
+        throw new Error(`Unsupported provider: ${provider}`);
+    }
+    
+    // For now, we'll simulate a successful API response
+    // In production, you would make an actual API call like this:
+    // const response = await fetch(apiEndpoint, {
+    //   method: 'POST',
+    //   headers: {
+    //     'Authorization': `Bearer ${apiKey}`,
+    //     'Content-Type': 'application/json'
+    //   },
+    //   body: JSON.stringify(requestData)
+    // });
+    // const result = await response.json();
+    
+    // Since we can't make real API calls without credentials, we'll simulate for now
     const paymentResponse = {
       success: true,
       paymentId: paymentId,
       redirectUrl: `${origin}/contribution-success?amount=${amount}&title=${encodeURIComponent(title)}&provider=${provider}`,
-      message: `Payment request of ${amount} TZS sent to your ${provider} mobile number. Please check your phone to confirm.`
+      message: `Payment request of ${amount.toLocaleString()} TZS has been sent to ${phoneNumber} via ${provider}. Please check your phone to confirm the transaction.`
     };
+
+    console.log(`Payment initiated: ${amount} TZS via ${provider} to ${phoneNumber}`);
 
     return new Response(JSON.stringify(paymentResponse), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },

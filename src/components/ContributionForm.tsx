@@ -17,6 +17,7 @@ export const ContributionForm = () => {
   const [description, setDescription] = useState('');
   const [amount, setAmount] = useState('');
   const [selectedProvider, setSelectedProvider] = useState('');
+  const [phoneNumber, setPhoneNumber] = useState('');
   const [isProcessing, setIsProcessing] = useState(false);
   const [error, setError] = useState('');
   const { toast } = useToast();
@@ -49,6 +50,11 @@ export const ContributionForm = () => {
       return;
     }
 
+    if (!phoneNumber || phoneNumber.length < 9) {
+      setError('Please enter a valid phone number');
+      return;
+    }
+
     setIsProcessing(true);
     
     try {
@@ -58,7 +64,8 @@ export const ContributionForm = () => {
           amount: numericAmount,
           title,
           description,
-          provider: selectedProvider
+          provider: selectedProvider,
+          phoneNumber
         },
       });
 
@@ -102,6 +109,7 @@ export const ContributionForm = () => {
 
   const handleProcessPayment = () => {
     // The form submission will handle the payment process
+    handleSubmit(new Event('submit') as unknown as React.FormEvent);
   };
 
   return (
@@ -158,7 +166,9 @@ export const ContributionForm = () => {
           
           <MobileMoneySelector
             onSelect={setSelectedProvider}
+            onPhoneChange={setPhoneNumber}
             selectedProvider={selectedProvider}
+            phoneNumber={phoneNumber}
             amount={parseFloat(amount) || 0}
             onProcessPayment={handleProcessPayment}
             isProcessing={isProcessing}
