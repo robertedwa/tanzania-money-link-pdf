@@ -8,7 +8,7 @@ const Contribute = () => {
       <div className="max-w-md mx-auto">
         <h1 className="text-2xl font-bold mb-2">Make a Contribution</h1>
         <p className="text-gray-600 mb-6">
-          Support community projects with a secure payment. Minimum contribution is 100,000 TZS.
+          Support community projects with a secure payment. Minimum contribution is 5,000 TZS.
         </p>
         <ContributionForm />
       </div>

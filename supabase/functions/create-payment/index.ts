@@ -22,10 +22,9 @@ serve(async (req) => {
       throw new Error('Invalid amount provided')
     }
     
-    // Ensure minimum amount - increase to 100,000 TZS which is around $40 USD
-    // This should be well above Stripe's minimum requirement
-    if (amount < 100000) {
-      throw new Error('Amount must be at least 100,000 TZS to meet Stripe minimum requirements')
+    // Ensure minimum amount - lower to 5,000 TZS which is around $2 USD
+    if (amount < 5000) {
+      throw new Error('Amount must be at least 5,000 TZS')
     }
     
     if (!title) {

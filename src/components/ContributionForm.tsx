@@ -36,9 +36,9 @@ export const ContributionForm = () => {
       return;
     }
     
-    // Validate minimum amount (100,000 TZS)
-    if (numericAmount < 100000) {
-      setError('Amount must be at least 100,000 TZS to meet payment processor requirements');
+    // Validate minimum amount (5,000 TZS)
+    if (numericAmount < 5000) {
+      setError('Amount must be at least 5,000 TZS');
       return;
     }
 
@@ -131,12 +131,12 @@ export const ContributionForm = () => {
               type="number"
               value={amount}
               onChange={(e) => setAmount(e.target.value)}
-              placeholder="100000"
+              placeholder="5000"
               required
-              min="100000"
+              min="5000"
               disabled={isProcessing}
             />
-            <p className="text-xs text-gray-500">Minimum amount: 100,000 TZS</p>
+            <p className="text-xs text-gray-500">Minimum amount: 5,000 TZS</p>
           </div>
           
           <Button type="submit" className="w-full" disabled={isProcessing}>
