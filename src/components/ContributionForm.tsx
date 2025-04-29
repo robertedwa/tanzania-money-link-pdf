@@ -10,11 +10,13 @@ import { Textarea } from '@/components/ui/textarea';
 import { supabase } from '@/integrations/supabase/client';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { AlertCircle, Loader2 } from 'lucide-react';
+import { MobileMoneySelector } from '@/components/MobileMoneySelector';
 
 export const ContributionForm = () => {
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [amount, setAmount] = useState('');
+  const [selectedProvider, setSelectedProvider] = useState('');
   const [isProcessing, setIsProcessing] = useState(false);
   const [error, setError] = useState('');
   const { toast } = useToast();
@@ -42,15 +44,21 @@ export const ContributionForm = () => {
       return;
     }
 
+    if (!selectedProvider) {
+      setError('Please select a mobile money provider');
+      return;
+    }
+
     setIsProcessing(true);
     
     try {
-      // Call the edge function to create payment
+      // Call the edge function to process mobile money payment
       const { data, error: paymentError } = await supabase.functions.invoke('create-payment', {
         body: { 
           amount: numericAmount,
           title,
-          description
+          description,
+          provider: selectedProvider
         },
       });
 
@@ -59,8 +67,8 @@ export const ContributionForm = () => {
         throw new Error(paymentError.message || 'Failed to process payment');
       }
       
-      if (!data?.url) {
-        throw new Error('No payment URL received from server');
+      if (!data?.redirectUrl) {
+        throw new Error('No payment redirect URL received from server');
       }
 
       // Add to contributions list
@@ -68,13 +76,18 @@ export const ContributionForm = () => {
         title,
         description,
         amount: numericAmount,
-        paymentMethod: 'stripe',
+        paymentMethod: selectedProvider,
         paymentStatus: 'pending',
         contributors: [],
       });
 
-      // Redirect to Stripe Checkout
-      window.location.href = data.url;
+      toast({
+        title: "Payment Initiated",
+        description: data.message || "Check your mobile phone to confirm the payment",
+      });
+
+      // Redirect to success page
+      window.location.href = data.redirectUrl;
     } catch (error) {
       console.error('Payment error:', error);
       setError(error.message || 'Failed to process payment. Please try again.');
@@ -85,6 +98,10 @@ export const ContributionForm = () => {
         variant: "destructive",
       });
     }
+  };
+
+  const handleProcessPayment = () => {
+    // The form submission will handle the payment process
   };
 
   return (
@@ -139,16 +156,13 @@ export const ContributionForm = () => {
             <p className="text-xs text-gray-500">Minimum amount: 5,000 TZS</p>
           </div>
           
-          <Button type="submit" className="w-full" disabled={isProcessing}>
-            {isProcessing ? (
-              <>
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Processing...
-              </>
-            ) : (
-              "Proceed to Payment"
-            )}
-          </Button>
+          <MobileMoneySelector
+            onSelect={setSelectedProvider}
+            selectedProvider={selectedProvider}
+            amount={parseFloat(amount) || 0}
+            onProcessPayment={handleProcessPayment}
+            isProcessing={isProcessing}
+          />
         </form>
       </div>
     </div>
