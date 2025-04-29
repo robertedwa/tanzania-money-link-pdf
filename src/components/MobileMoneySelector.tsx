@@ -13,6 +13,7 @@ import {
 } from '@/components/ui/select';
 import { toast } from '@/components/ui/use-toast';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
+import { SmartphoneIcon, PhoneIcon } from 'lucide-react';
 
 interface MobileMoneyProps {
   onSelect: (provider: string) => void;
@@ -87,7 +88,10 @@ export const MobileMoneySelector = ({
         {selectedProvider && (
           <div className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="phoneNumber">Phone Number</Label>
+              <Label htmlFor="phoneNumber" className="flex items-center gap-2">
+                <PhoneIcon className="h-4 w-4" />
+                Phone Number
+              </Label>
               <Input
                 id="phoneNumber"
                 type="tel"
@@ -123,10 +127,17 @@ export const MobileMoneySelector = ({
         
         <Button 
           onClick={handleProcessPayment}
-          disabled={!selectedProvider || !phoneNumber || isProcessing}
+          disabled={!selectedProvider || !phoneNumber || isProcessing || amount < 5000}
           className="w-full"
         >
-          {isProcessing ? "Processing..." : `Pay ${amount.toLocaleString()} TZS`}
+          {isProcessing ? (
+            <>Processing...</>
+          ) : (
+            <>
+              <SmartphoneIcon className="mr-2 h-4 w-4" />
+              Pay {amount.toLocaleString()} TZS
+            </>
+          )}
         </Button>
       </div>
     </div>
