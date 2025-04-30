@@ -13,7 +13,8 @@ import {
 } from '@/components/ui/select';
 import { toast } from '@/components/ui/use-toast';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
-import { SmartphoneIcon, PhoneIcon, NetworkIcon, CheckIcon } from 'lucide-react';
+import { SmartphoneIcon, PhoneIcon, NetworkIcon, CheckIcon, AlertCircle } from 'lucide-react';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 
 interface MobileMoneyProps {
   onSelect: (provider: string) => void;
@@ -35,7 +36,10 @@ export const MobileMoneySelector = ({
   isProcessing
 }: MobileMoneyProps) => {
   
+  const [phoneError, setPhoneError] = useState<string>("");
+  
   const handleProcessPayment = () => {
+    // Validate inputs before processing payment
     if (!selectedProvider) {
       toast({
         title: "Error",
@@ -45,16 +49,28 @@ export const MobileMoneySelector = ({
       return;
     }
     
-    if (!phoneNumber || phoneNumber.length < 9) {
-      toast({
-        title: "Error",
-        description: "Please enter a valid phone number",
-        variant: "destructive",
-      });
+    if (!validatePhoneNumber(phoneNumber)) {
+      setPhoneError("Please enter a valid Tanzanian mobile number");
       return;
     }
     
+    setPhoneError("");
     onProcessPayment();
+  };
+
+  const validatePhoneNumber = (phone: string): boolean => {
+    // Tanzanian phone patterns: 07xxxxxxxx, 255xxxxxxxx, +255xxxxxxxx
+    if (!phone) return false;
+    
+    const cleanPhone = phone.replace(/\D/g, '');
+    
+    // Check if starts with 0 followed by 9 digits
+    const tanzanianPattern1 = /^0[67][0-9]{8}$/;
+    
+    // Check if starts with 255 followed by 9 digits
+    const tanzanianPattern2 = /^255[67][0-9]{8}$/;
+    
+    return tanzanianPattern1.test(cleanPhone) || tanzanianPattern2.test(cleanPhone);
   };
 
   const formatPhoneNumber = (input: string) => {
@@ -79,7 +95,10 @@ export const MobileMoneySelector = ({
       <div className="space-y-4">
         <RadioGroup 
           value={selectedProvider} 
-          onValueChange={onSelect}
+          onValueChange={(value) => {
+            onSelect(value);
+            setPhoneError("");
+          }}
           className="flex flex-col space-y-3"
         >
           {mobileMoneyProviders.map(provider => (
@@ -104,11 +123,23 @@ export const MobileMoneySelector = ({
                 id="phoneNumber"
                 type="tel"
                 value={phoneNumber}
-                onChange={(e) => onPhoneChange(formatPhoneNumber(e.target.value))}
+                onChange={(e) => {
+                  const formatted = formatPhoneNumber(e.target.value);
+                  onPhoneChange(formatted);
+                  setPhoneError("");
+                }}
                 placeholder="e.g. 0712345678"
                 disabled={isProcessing}
+                className={phoneError ? "border-red-500" : ""}
               />
-              <p className="text-xs text-gray-500">Enter the mobile money number without country code</p>
+              {phoneError ? (
+                <Alert variant="destructive" className="py-2">
+                  <AlertCircle className="h-4 w-4" />
+                  <AlertDescription className="text-xs">{phoneError}</AlertDescription>
+                </Alert>
+              ) : (
+                <p className="text-xs text-gray-500">Enter your mobile money phone number (e.g. 0712345678)</p>
+              )}
             </div>
             
             <div className="p-4 bg-slate-50 rounded-md">

@@ -68,6 +68,7 @@ export const getProfileData = (): Profile => {
   return getProfile();
 };
 
+// Updated provider IDs to match what's expected in the edge function
 export const mobileMoneyProviders = [
   { id: 'mpesa', name: 'M-Pesa', logo: '📱' },
   { id: 'tigopesa', name: 'Tigo Pesa', logo: '💰' },

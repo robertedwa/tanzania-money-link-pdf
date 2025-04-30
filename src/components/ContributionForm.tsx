@@ -74,6 +74,12 @@ export const ContributionForm = () => {
         throw new Error(paymentError.message || 'Failed to process payment');
       }
       
+      if (!data || !data.success) {
+        // Check if there's a specific error message in the response
+        const errorMessage = data?.error || 'Failed to process payment';
+        throw new Error(errorMessage);
+      }
+      
       if (!data?.redirectUrl) {
         throw new Error('No payment redirect URL received from server');
       }

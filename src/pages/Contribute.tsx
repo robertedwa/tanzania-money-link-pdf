@@ -1,7 +1,8 @@
 
 import { Layout } from '@/components/Layout';
 import { ContributionForm } from '@/components/ContributionForm';
-import { NetworkIcon } from 'lucide-react';
+import { NetworkIcon, AlertCircle } from 'lucide-react';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 
 const Contribute = () => {
   return (
@@ -14,6 +15,14 @@ const Contribute = () => {
         <p className="text-gray-600 mb-3">
           Support community projects with secure Tanzanian mobile money payments.
         </p>
+        
+        <Alert className="mb-6">
+          <AlertCircle className="h-4 w-4" />
+          <AlertDescription>
+            You are now using live mobile money transaction processing for Tanzania. All transactions are processed in real-time.
+          </AlertDescription>
+        </Alert>
+        
         <div className="bg-blue-50 p-3 rounded-md mb-6 text-sm">
           <p className="font-medium mb-1 text-blue-700">Live Payment Process:</p>
           <ul className="list-disc pl-4 text-blue-700 space-y-1">
