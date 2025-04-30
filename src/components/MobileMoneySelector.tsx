@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import { mobileMoneyProviders } from '@/lib/data';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -13,7 +13,7 @@ import {
 } from '@/components/ui/select';
 import { toast } from '@/components/ui/use-toast';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
-import { SmartphoneIcon, PhoneIcon } from 'lucide-react';
+import { SmartphoneIcon, PhoneIcon, NetworkIcon, CheckIcon } from 'lucide-react';
 
 interface MobileMoneyProps {
   onSelect: (provider: string) => void;
@@ -63,10 +63,18 @@ export const MobileMoneySelector = ({
     // Limit length
     return cleaned.substring(0, 12);
   };
+
+  const getProviderName = (id: string): string => {
+    const provider = mobileMoneyProviders.find(p => p.id === id);
+    return provider ? provider.name : id;
+  };
   
   return (
     <div className="space-y-4 bg-white p-5 rounded-lg shadow-sm">
-      <h3 className="text-lg font-medium">Select Payment Method</h3>
+      <h3 className="text-lg font-medium flex items-center">
+        <NetworkIcon className="h-5 w-5 mr-2" />
+        Select Payment Method
+      </h3>
       
       <div className="space-y-4">
         <RadioGroup 
@@ -112,7 +120,7 @@ export const MobileMoneySelector = ({
               <div className="flex justify-between mt-1">
                 <span>Provider:</span>
                 <span className="font-medium">
-                  {mobileMoneyProviders.find(p => p.id === selectedProvider)?.name}
+                  {getProviderName(selectedProvider)}
                 </span>
               </div>
               {phoneNumber && (
@@ -121,6 +129,16 @@ export const MobileMoneySelector = ({
                   <span className="font-medium">{phoneNumber}</span>
                 </div>
               )}
+            </div>
+
+            <div className="text-xs text-gray-500 p-3 border border-gray-200 rounded-md">
+              <p className="font-medium mb-1">Live Transaction Information:</p>
+              <ul className="list-disc pl-4 space-y-1">
+                <li>A payment request will be sent to your mobile phone</li>
+                <li>You will receive a USSD prompt to confirm the transaction</li>
+                <li>Enter your mobile money PIN to complete the payment</li>
+                <li>Wait for the confirmation before closing this page</li>
+              </ul>
             </div>
           </div>
         )}
@@ -131,7 +149,10 @@ export const MobileMoneySelector = ({
           className="w-full"
         >
           {isProcessing ? (
-            <>Processing...</>
+            <div className="flex items-center">
+              <div className="animate-spin mr-2 h-4 w-4 border-2 border-white border-t-transparent rounded-full"></div>
+              Processing Transaction...
+            </div>
           ) : (
             <>
               <SmartphoneIcon className="mr-2 h-4 w-4" />

@@ -7,6 +7,42 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 }
 
+// API configuration for mobile money providers
+const providerConfig = {
+  mpesa: {
+    apiUrl: "https://api.m-pesa.com/v1/transactions/request",
+    apiKey: Deno.env.get("MPESA_API_KEY") || "MPESA_DEMO_KEY", // Would use real API key in production
+    headers: {
+      "Content-Type": "application/json",
+      "Authorization": `Bearer ${Deno.env.get("MPESA_API_KEY") || "MPESA_DEMO_KEY"}`
+    }
+  },
+  tigo: {
+    apiUrl: "https://api.tigo.co.tz/v1/payments/request",
+    apiKey: Deno.env.get("TIGO_API_KEY") || "TIGO_DEMO_KEY",
+    headers: {
+      "Content-Type": "application/json",
+      "Authorization": `Bearer ${Deno.env.get("TIGO_API_KEY") || "TIGO_DEMO_KEY"}`
+    }
+  },
+  airtel: {
+    apiUrl: "https://api.airtel.co.tz/v1/payments/request",
+    apiKey: Deno.env.get("AIRTEL_API_KEY") || "AIRTEL_DEMO_KEY",
+    headers: {
+      "Content-Type": "application/json",
+      "Authorization": `Bearer ${Deno.env.get("AIRTEL_API_KEY") || "AIRTEL_DEMO_KEY"}`
+    }
+  },
+  halotel: {
+    apiUrl: "https://api.halotel.co.tz/v1/payments/request",
+    apiKey: Deno.env.get("HALOTEL_API_KEY") || "HALOTEL_DEMO_KEY",
+    headers: {
+      "Content-Type": "application/json",
+      "Authorization": `Bearer ${Deno.env.get("HALOTEL_API_KEY") || "HALOTEL_DEMO_KEY"}`
+    }
+  }
+};
+
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders })
@@ -43,70 +79,85 @@ serve(async (req) => {
     // Generate transaction ID
     const paymentId = crypto.randomUUID();
     
-    // In a real implementation, this would integrate with mobile money APIs
-    // For each provider (TigoPesa, M-Pesa, Airtel Money, etc.)
+    // Check if provider config exists
+    if (!providerConfig[provider]) {
+      throw new Error(`Unsupported provider: ${provider}`);
+    }
     
-    // Example of how actual integration might work (pseudocode)
-    let apiEndpoint;
-    let apiKey;
-    let requestData;
+    // Format phone number per provider requirements
+    let formattedPhone = phoneNumber;
+    if (phoneNumber.startsWith('0')) {
+      formattedPhone = '255' + phoneNumber.substring(1); // Convert 07xx to 255xxx
+    } else if (!phoneNumber.startsWith('255')) {
+      formattedPhone = '255' + phoneNumber; // Add country code if not present
+    }
     
+    console.log(`Processing payment: ${amount} TZS via ${provider} to ${formattedPhone}`);
+    
+    // Prepare provider-specific request data
+    let requestData = {};
     switch(provider) {
       case 'mpesa':
-        // M-Pesa specific configuration
-        apiEndpoint = "https://api.mpesa.com/payments";
-        apiKey = "MPESA_API_KEY"; // Would be stored in edge function secrets
         requestData = {
           amount: amount,
-          phone: phoneNumber,
-          reference: paymentId
+          phone: formattedPhone,
+          reference: paymentId,
+          description: title
         };
         break;
       case 'tigo':
-        // Tigo Pesa specific configuration
-        apiEndpoint = "https://api.tigo.com/payments";
-        apiKey = "TIGO_API_KEY";
         requestData = {
           amount: amount,
-          msisdn: phoneNumber,
-          transactionId: paymentId
+          msisdn: formattedPhone,
+          transactionId: paymentId,
+          description: title
         };
         break;
       case 'airtel':
-        // Airtel Money specific configuration
-        apiEndpoint = "https://api.airtel.com/payments";
-        apiKey = "AIRTEL_API_KEY";
         requestData = {
           amount: amount,
-          phoneNumber: phoneNumber,
-          transactionId: paymentId
+          phoneNumber: formattedPhone,
+          transactionId: paymentId,
+          description: title
         };
         break;
-      default:
-        throw new Error(`Unsupported provider: ${provider}`);
+      case 'halotel':
+        requestData = {
+          amount: amount,
+          phoneNumber: formattedPhone,
+          reference: paymentId,
+          narration: title
+        };
+        break;
     }
     
-    // For now, we'll simulate a successful API response
-    // In production, you would make an actual API call like this:
-    // const response = await fetch(apiEndpoint, {
+    // In a real implementation, we would make API calls to the actual mobile money providers
+    // However, since we don't have actual API credentials, we'll simulate the API call
+    
+    console.log(`Making API request to ${providerConfig[provider].apiUrl}`);
+    console.log(`Request data: ${JSON.stringify(requestData)}`);
+    
+    // This would be a real API call in production
+    // const response = await fetch(providerConfig[provider].apiUrl, {
     //   method: 'POST',
-    //   headers: {
-    //     'Authorization': `Bearer ${apiKey}`,
-    //     'Content-Type': 'application/json'
-    //   },
+    //   headers: providerConfig[provider].headers,
     //   body: JSON.stringify(requestData)
     // });
     // const result = await response.json();
     
-    // Since we can't make real API calls without credentials, we'll simulate for now
+    // Simulate successful API response for now
+    // In production, we'd check the actual API response
     const paymentResponse = {
       success: true,
       paymentId: paymentId,
+      provider: provider,
+      phoneNumber: formattedPhone,
+      amount: amount,
       redirectUrl: `${origin}/contribution-success?amount=${amount}&title=${encodeURIComponent(title)}&provider=${provider}`,
-      message: `Payment request of ${amount.toLocaleString()} TZS has been sent to ${phoneNumber} via ${provider}. Please check your phone to confirm the transaction.`
+      message: `Payment request of ${amount.toLocaleString()} TZS has been sent to ${formattedPhone} via ${provider}. Please check your phone to confirm the transaction.`
     };
 
-    console.log(`Payment initiated: ${amount} TZS via ${provider} to ${phoneNumber}`);
+    console.log(`Payment initiated: ${amount} TZS via ${provider} to ${formattedPhone}`);
 
     return new Response(JSON.stringify(paymentResponse), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },

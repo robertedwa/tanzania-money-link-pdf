@@ -9,7 +9,7 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { supabase } from '@/integrations/supabase/client';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { AlertCircle, Loader2 } from 'lucide-react';
+import { AlertCircle, Loader2, NetworkIcon } from 'lucide-react';
 import { MobileMoneySelector } from '@/components/MobileMoneySelector';
 
 export const ContributionForm = () => {
@@ -115,7 +115,10 @@ export const ContributionForm = () => {
   return (
     <div className="space-y-6">
       <div className="bg-white p-5 rounded-lg shadow-sm">
-        <h2 className="text-xl font-bold mb-4">Create Contribution</h2>
+        <h2 className="text-xl font-bold mb-4 flex items-center">
+          <NetworkIcon className="h-5 w-5 mr-2" />
+          Create Contribution
+        </h2>
         
         {error && (
           <Alert variant="destructive" className="mb-4">
