@@ -1,7 +1,7 @@
 
 import { Layout } from '@/components/Layout';
 import { ContributionForm } from '@/components/ContributionForm';
-import { NetworkIcon, AlertCircle } from 'lucide-react';
+import { NetworkIcon, AlertCircle, CheckCircle } from 'lucide-react';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 
 const Contribute = () => {
@@ -10,27 +10,28 @@ const Contribute = () => {
       <div className="max-w-md mx-auto">
         <h1 className="text-2xl font-bold mb-2 flex items-center">
           <NetworkIcon className="h-6 w-6 mr-2" />
-          Mobile Money Contribution
+          TanzaPay Mobile Money
         </h1>
         <p className="text-gray-600 mb-3">
-          Support community projects with secure Tanzanian mobile money payments.
+          Live mobile money transactions for Tanzania - M-Pesa, Tigo Pesa, Airtel Money, and Halopesa.
         </p>
         
-        <Alert className="mb-6">
-          <AlertCircle className="h-4 w-4" />
-          <AlertDescription>
-            You are now using live mobile money transaction processing for Tanzania. All transactions are processed in real-time.
+        <Alert className="mb-6 bg-green-50 border-green-300 text-green-700">
+          <CheckCircle className="h-4 w-4 text-green-600" />
+          <AlertDescription className="text-green-700">
+            You are using live mobile money transaction processing for Tanzania. All payments are processed through real provider APIs.
           </AlertDescription>
         </Alert>
         
-        <div className="bg-blue-50 p-3 rounded-md mb-6 text-sm">
-          <p className="font-medium mb-1 text-blue-700">Live Payment Process:</p>
-          <ul className="list-disc pl-4 text-blue-700 space-y-1">
-            <li>Enter project details and amount (minimum 5,000 TZS)</li>
-            <li>Choose your mobile money provider: M-Pesa, Tigo Pesa, Airtel Money or Halopesa</li>
-            <li>Enter the phone number linked to your mobile money account</li>
-            <li>You'll receive a USSD prompt on your phone to confirm the payment</li>
-            <li>Enter your mobile money PIN to complete the transaction</li>
+        <div className="bg-blue-50 p-4 rounded-md mb-6 text-sm border border-blue-200">
+          <p className="font-medium mb-2 text-blue-800">Live Payment Process:</p>
+          <ul className="list-disc pl-5 text-blue-700 space-y-1.5">
+            <li>Enter contribution details and amount (minimum 5,000 TZS)</li>
+            <li>Select your Tanzania mobile money provider</li>
+            <li>Enter the phone number connected to your mobile money account</li>
+            <li>Approve the payment on your phone when prompted</li>
+            <li>Enter your PIN when requested to complete the transaction</li>
+            <li>Receive instant confirmation when payment is successful</li>
           </ul>
         </div>
         <ContributionForm />
